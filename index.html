@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
+    <title>Para Malena</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&amp;family=Spline+Sans:wght@300;400;500;700&amp;family=Caveat:wght@400;700&amp;family=Alex+Brush&amp;display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f9f506",
+                        "background-light": "#fdf8f4",
+                        "background-dark": "#1a1a1a",
+                        "snoopy-red": "#cc4e4e",
+                        "ink": "#2c2c2c",
+                        "envelope-cream": "#f0ebe0", /* Slightly darker for realism */
+                        "paper-cream": "#fffdf0",
+                    },
+                    fontFamily: {
+                        "display": ["Spline Sans", "sans-serif"],
+                        "serif": ["Playfair Display", "serif"],
+                        "handwriting": ["Caveat", "cursive"],
+                        "signature": ["Alex Brush", "cursive"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    animation: {
+                        'float': 'float 8s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0) rotate(0)' },
+                            '50%': { transform: 'translateY(-15px) rotate(5deg)' },
+                        }
+                    }
+                },
+            },
+        }
+    </script>
+    <style type="text/tailwindcss">
+        :root {
+            --seal-red: #8b2d2d;
+        }
+        
+        body {
+            &.letter-open {
+                overflow: hidden;
+            }
+            
+        }
+
+        .envelope-container {
+            perspective: 1200px;
+            z-index: 20;
+        }
+        
+        .envelope {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            background: #f0ebe0;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.05); /* Deeper shadow */
+            margin: auto;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @media (min-width: 640px) {
+            .envelope {
+                width: 360px;
+                height: 240px;
+            }
+        }
+
+        /* 
+           FIXED FLAP & CLOSURE 
+           Increased flap height to 52% to ensure perfect overlap 
+        */
+        .envelope-flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60%; /* Increased to ensure overlap */
+            background: #f0ebe0; /* Matches envelope body */
+            clip-path: polygon(0 0, 50% 100%, 100% 0); /* Point reaches exactly the middle height relative to flap */
+            z-index: 5;
+            transform-origin: top;
+            border-top: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Soft shadow for depth */
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.6s, z-index 0s linear 0.6s;
+        }
+        
+        /* Darken flap slightly to distinguish layers */
+        .envelope-flap::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.02);
+            pointer-events: none;
+        }
+
+        .envelope.is-open .envelope-flap {
+            transform: rotateX(180deg);
+            z-index: 1;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0s, z-index 0s linear 0.3s;
+        }
+
+        .envelope-front {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #f0ebe0;
+            /* Raised the middle point to 53% so the flap (60%) definitely overlaps it */
+            clip-path: polygon(0 0, 50% 53%, 100% 0, 100% 100%, 0 100%);
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        .letter-preview {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            height: 90%;
+            background: white;
+            z-index: 2; /* Inside pocket */
+            border-radius: 4px;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            align-items: center;
+            transition: transform 0.5s ease-out 0s;
+        }
+
+        .envelope.is-open .letter-preview {
+            transform: translateY(-90px);
+            z-index: 3; /* Comes out above pocket */
+            transition: transform 0.6s ease-out 0.5s;
+        }
+
+        .wax-seal {
+            position: absolute;
+            top: 52%; /* Precisely at flap tip */
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 48px;
+            height: 48px;
+            background: var(--seal-red);
+            border-radius: 50%;
+            z-index: 6; /* Topmost */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2), inset 0 -3px 8px rgba(0,0,0,0.2), inset 0 2px 5px rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: all 0.4s ease;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .envelope.is-open .wax-seal {
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(0.5);
+        }
+
+        /* Full Screen Overlay */
+        .full-screen-letter {
+            position: fixed;
+            inset: 0;
+            background: rgba(26, 26, 26, 0.85); /* Darker backdrop */
+            backdrop-filter: blur(8px);
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0; /* Remove padding to handle mobile scrolling fully */
+        }
+
+        .full-screen-letter.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .paper-content {
+            background-color: #fffdf0;
+            background-image: linear-gradient(#f0ebe0 1px, transparent 1px);
+            background-size: 100% 1.8rem;
+            width: 100%;
+            max-width: 600px;
+            height: 100%; /* Full height on mobile */
+            max-height: 100vh;
+            padding: 2rem 1.5rem 6rem 1.5rem; /* Bottom padding for scroll */
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            transform: translateY(100vh); /* Start off screen */
+            transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        @media (min-width: 768px) {
+            .paper-content {
+                height: auto;
+                max-height: 90vh;
+                border-radius: 4px;
+                transform: scale(0.9) translateY(40px);
+                padding: 3rem;
+            }
+        }
+
+        .full-screen-letter.visible .paper-content {
+            transform: translateY(0); /* Mobile slide up */
+        }
+        
+        @media (min-width: 768px) {
+            .full-screen-letter.visible .paper-content {
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* Video & Grid */
+        .grid-gallery {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .video-container {
+            position: relative;
+            padding-bottom: 177.77%; /* 9:16 Aspect Ratio (Vertical Video) typical for phone recordings */
+            height: 0;
+            overflow: hidden;
+            border-radius: 1rem;
+            background: #000;
+            margin: 1.5rem 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 4px solid white;
+        }
+        
+        .video-container.wide {
+            padding-bottom: 56.25%; /* 16:9 Standard */
+        }
+
+        .video-container iframe, 
+        .video-container video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Polaroid Styles */
+        .polaroid {
+            background: white;
+            padding: 0.6rem 0.6rem 2rem 0.6rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            width: 100%;
+            height: fit-content;
+        }
+        .polaroid img { width: 100%; height: auto; border-radius: 2px; display: block; filter: sepia(10%); }
+        .polaroid:nth-child(odd) { transform: rotate(-2deg); }
+        .polaroid:nth-child(even) { transform: rotate(2deg); margin-top: 1rem; }
+
+        /* Hearts Background */
+        .heart-bg {
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+            color: rgba(204, 78, 78, 0.15);
+        }
+
+        .typewriter span {
+            opacity: 0;
+            transition: opacity 0.05s ease;
+        }
+        .typewriter span.visible {
+            opacity: 1;
+        }
+
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 150px;
+            margin: 2rem 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='100%25' height='100%25' viewBox='0 0 800 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cstyle%3E.path%7Bfill:none;stroke:%23e2e8f0;stroke-width:2;stroke-dasharray:10,10;animation:dash 30s linear infinite%7D@keyframes dash%7Bto%7Bstroke-dashoffset:-1000%7D%7D%3C/style%3E%3Cpath class='path' d='M100,200 Q400,50 700,200' /%3E%3Ccircle cx='100' cy='200' r='8' fill='%23cc4e4e'/%3E%3Ccircle cx='700' cy='200' r='8' fill='%23cc4e4e'/%3E%3Ctext x='100' y='230' font-family='sans-serif' font-size='14' fill='%2364748b' text-anchor='middle'%3EAcá%3C/text%3E%3Ctext x='700' y='230' font-family='sans-serif' font-size='14' fill='%2364748b' text-anchor='middle'%3ECórdoba%3C/text%3E%3Cg%3E%3CanimateMotion dur='4s' repeatCount='indefinite' path='M100,200 Q400,50 700,200' /%3E%3Ctext font-size='24'%3E✈️%3C/text%3E%3C/g%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+        }
+    </style>
+</head>
+
+<body class="bg-[#fafaf9] min-h-screen font-display text-slate-800 overflow-x-hidden selection:bg-pink-200">
+
+    <!-- Calm Light Background Effect -->
+    <div class="fixed inset-0 z-0 pointer-events-none">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,_#fdf4ff_0%,_#fafaf9_60%,_#f5f5f4_100%)]">
+        </div>
+        <div
+            class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-40 brightness-100 contrast-100 mix-blend-overlay">
+        </div>
+    </div>
+
+    <!-- Floating Background Hearts -->
+    <div class="fixed inset-0 pointer-events-none">
+        <span
+            class="material-symbols-outlined heart-bg text-4xl animate-[float_8s_infinite] left-[10%] top-[10%]">favorite</span>
+        <span
+            class="material-symbols-outlined heart-bg text-6xl animate-[float_10s_infinite_reverse] right-[10%] top-[20%] opacity-20">favorite</span>
+        <span
+            class="material-symbols-outlined heart-bg text-3xl animate-[float_7s_infinite] left-[20%] bottom-[20%]">favorite</span>
+        <span
+            class="material-symbols-outlined heart-bg text-5xl animate-[float_9s_infinite_reverse] right-[15%] bottom-[15%]">favorite</span>
+    </div>
+
+    <!-- Main Entry Screen -->
+    <main class="relative h-[100dvh] w-full flex flex-col items-center justify-between py-12 px-4 overflow-hidden">
+
+        <!-- Memories Button (Initially Hidden) -->
+        <!-- Memories Button Removed -->
+
+        <div class="w-full text-center z-10 transition-all duration-700 mt-8" id="header-text">
+            <h1 class="font-serif text-3xl text-slate-800 italic drop-shadow-sm tracking-wide">Para mi niña</h1>
+            <p class="text-[10px] text-slate-400 uppercase tracking-[0.3em] font-bold mt-2">Con mucho cariño</p>
+        </div>
+
+        <div class="envelope-wrapper relative z-20 mt-8">
+            <div class="envelope-container" id="envelope-container">
+                <div class="envelope rounded" id="envelope">
+
+                    <!-- Inner Preview (Hidden until open) -->
+                    <div class="letter-preview">
+                        <div
+                            class="w-10 h-10 bg-gray-100 rounded-full mb-4 flex items-center justify-center opacity-50">
+                            <span class="material-symbols-outlined text-gray-400">favorite</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-gray-100 rounded-full mb-2"></div>
+                        <div class="w-2/3 h-1.5 bg-gray-100 rounded-full"></div>
+                    </div>
+
+                    <!-- Envelope Front & Flap -->
+                    <div class="envelope-front rounded"></div>
+                    <div class="envelope-flap rounded"></div>
+
+                    <!-- Wax Seal Trigger -->
+                    <button class="wax-seal group animate-pulse" id="open-btn" aria-label="Abrir carta">
+                        <span
+                            class="material-symbols-outlined text-white/90 text-2xl group-hover:scale-110 transition-transform">favorite</span>
+                    </button>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center transition-all duration-700 delay-100 flex flex-col items-center gap-6 z-30 mb-4"
+            id="footer-text">
+            <p class="font-handwriting text-xl text-slate-500" id="instruction-text">Toca el corazón para leer</p>
+
+            <!-- Music Player -->
+            <div
+                class="bg-gradient-to-br from-green-900/90 to-stone-900/90 backdrop-blur-md text-white rounded-full p-2 pr-5 flex items-center gap-3 border border-white/10 w-[300px] relative overflow-hidden group shadow-[0_0_25px_-5px_rgba(74,222,128,0.3)] hover:shadow-[0_0_35px_-5px_rgba(74,222,128,0.5)] transition-shadow duration-500">
+                <!-- Progress Bar Background -->
+                <div class="absolute bottom-0 left-6 right-6 h-[2px] bg-white/10 rounded-full">
+                    <!-- Active Progress -->
+                    <div id="progress-bar"
+                        class="h-full bg-white w-0 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(255,255,255,0.5)]">
+                    </div>
+                </div>
+
+                <!-- Album Art -->
+                <div class="relative w-12 h-12 flex-shrink-0">
+                    <img src="./musica/logo.jpg"
+                        class="w-full h-full object-cover object-[35%_center] rounded-full border-2 border-white/30 shadow-md"
+                        id="album-art">
+                </div>
+
+                <!-- Song Info -->
+                <div class="flex flex-col text-left flex-1 min-w-0">
+                    <span class="font-bold text-sm truncate drop-shadow-md">Crazy Love</span>
+                    <span class="text-[10px] text-green-100 truncate opacity-90">Fazzini, Franky Style</span>
+                </div>
+
+                <!-- Controls -->
+                <div class="flex items-center gap-3">
+
+                    <button id="music-btn"
+                        class="w-10 h-10 bg-white text-green-700 rounded-full flex items-center justify-center hover:bg-green-50 transition-colors shadow-lg">
+                        <span class="material-symbols-outlined text-2xl" id="play-icon">play_arrow</span>
+                    </button>
+                </div>
+
+                <audio id="audio-player" src="./musica/crazy-love.mp3?v=2" preload="metadata"></audio>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Expanded Letter Modal -->
+    <div class="full-screen-letter" id="full-screen-view">
+        <div class="paper-content" onclick="event.stopPropagation()">
+
+            <!-- Close X -->
+            <button class="absolute top-4 right-4 p-2 text-ink/30 hover:text-snoopy-red transition-colors z-30"
+                id="close-btn">
+                <span class="material-symbols-outlined text-3xl">close</span>
+            </button>
+
+            <!-- Letter Text & Content -->
+            <article
+                class="prose prose-p:font-handwriting prose-p:text-2xl prose-p:leading-relaxed prose-headings:font-serif text-ink/80 max-w-none">
+
+                <div class="text-center mb-12">
+                    <p class="text-xs font-sans tracking-widest uppercase opacity-40 mb-2">14 de Febrero, 2026</p>
+                    <h2 class="text-4xl italic font-bold text-ink mb-1">Querida Male❤️,</h2>
+                </div>
+
+                <!-- Intro Paragraphs -->
+                <p class="typewriter-text">
+                    Te escribí esta cartita porque, aunque hace menos de un mes que nos conocemos, ya te agarre
+                    muchisimo cariño
+                    . Quería desearte un muy feliz 14 de febrero ❤️.<br>
+                    A pesar de que vos estés lejitos, me encanta todo, el hablar con vos y
+                    conocerte mas.
+                    Siento que conectamos de una forma re linda y cada vez que hablamos me sacás una
+                    sonrisa siempre, siempre logras cambiarme el dia y sacarme de mis bajones y lo sabes.
+                </p>
+
+
+
+                <p class="mt-8 typewriter-text">
+                    Ojalá este sea solo el primero de un montón de momentos lindos que nos toquen vivir aunque me mata
+                    la
+                    distancia y saber que estás lejos, pero te juro que las ganas de conocerte y de tenerte
+                    cerquita no se me van, al contrario, cada vez son más. Sos una personita increíble mi niña de ojitos
+                    hermosos💖.
+                </p>
+
+                <!-- Map Illustration -->
+                <div class="map-container" aria-label="Mapa conectando nosotros con Córdoba"></div>
+                <p class="text-center text-xs text-slate-400 -mt-6 mb-8 font-sans tracking-widest uppercase">Rompiendo
+                    la distancia</p>
+
+                <!-- Grid Gallery 1 -->
+
+
+                <p class="typewriter-text">
+                    Yo sé que capaz es re pronto y que recién estamos arrancando, pero la verdad es que me
+                    ilusiona una banda todo lo que se pueda dar entre nosotros. Me encanta tu forma de ser, tus
+                    ojitos, y cómo, con un par de mensajes, lográs cambiarme el día y hacerme sentir re bien. Me
+                    hacés sentir cosas que hace mucho no sentía.
+                </p>
+
+                <!-- Snoopy Hug Sticker (Right) -->
+                <div class="w-full flex justify-end -mt-2 mb-4 relative z-10 pointer-events-none">
+                    <div class="tenor-gif-embed transform rotate-6 hover:rotate-0 transition-transform origin-bottom-right"
+                        data-postid="7666949294385418314" data-share-method="host" data-aspect-ratio="1"
+                        data-width="70px"><a
+                            href="https://tenor.com/view/hugging-heart-snoopy-peanuts-embracing-heart-i-love-you-gif-7666949294385418314">Hugging
+                            Heart Snoopy Sticker</a></div>
+                </div>
+
+
+
+                <p class="typewriter-text">
+                    Quiero que sepas que de verdad valoro todo, cada risa que nos sacamos y cada segundito que
+                    compartimos. Todo eso me hace muy feliz y me demuestra que,
+                    te amo y si quiero algo lindo con vos, la distancia y la edad no importan tanto jskjsj.
+                </p>
+
+                <!-- Snoopy Gift Sticker (Left) -->
+                <div class="w-full flex justify-start mt-2 mb-4 relative z-10 pointer-events-none">
+                    <div class="tenor-gif-embed transform -rotate-6 hover:rotate-0 transition-transform origin-bottom-left"
+                        data-postid="2148518502380885007" data-share-method="host" data-aspect-ratio="1"
+                        data-width="75px"><a
+                            href="https://tenor.com/view/giving-gift-snoopy-peanuts-here-s-your-gift-i-got-a-present-for-you-gif-2148518502380885007">Giving
+                            Gift Snoopy Sticker</a></div>
+                </div>
+
+
+
+                <p>
+                    Te mando un besito. Acordate siempre
+                    de lo musho que te amoo mi bb tiquitita, y que acá estoy para vos, pensando en cuándo será el día
+                    que nos
+                    podamos ver. Feliz San Valentín, hermosa💞.
+                </p>
+
+
+
+                <div class="mt-16 pt-8 border-t border-dashed border-ink/20 flex flex-col items-center gap-6">
+                    <p class="font-serif italic text-lg text-ink/60">Con todo mi cariño.</p>
+
+                    <div class="font-signature text-5xl opacity-90 mb-4 transform -rotate-3 text-ink/80">Enzo Benitez
+                    </div>
+
+                    <!-- Cat Kiss GIF -->
+                    <div class="tenor-gif-embed" data-postid="11816971814746635421" data-share-method="host"
+                        data-aspect-ratio="8" data-width="100%"><a
+                            href="https://tenor.com/view/kiss-gif-11816971814746635421">Kiss GIF</a>from <a
+                            href="https://tenor.com/search/kiss-gifs">Kiss GIFs</a></div>
+                    <script type="text/javascript" async src="https://tenor.com/embed.js"></script>
+                </div>
+
+            </article>
+        </div>
+    </div>
+
+    <!-- Memories Modal Removed -->
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const envelope = document.getElementById('envelope');
+            const openBtn = document.getElementById('open-btn');
+            const fullScreenView = document.getElementById('full-screen-view');
+            const closeBtn = document.getElementById('close-btn');
+            const headerText = document.getElementById('header-text');
+            const footerText = document.getElementById('footer-text');
+
+
+
+            let isOpen = false;
+            let hasOpenedOnce = false;
+
+
+
+            const openLetter = () => {
+                if (isOpen) return;
+                isOpen = true;
+
+                // Fade out UI
+                headerText.style.opacity = '0';
+                footerText.style.opacity = '0';
+
+
+                // Open Envelope
+                envelope.classList.add('is-open');
+
+                // Confetti Explosion
+                const duration = 3000;
+                const end = Date.now() + duration;
+
+                (function frame() {
+                    confetti({
+                        particleCount: 5,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 },
+                        colors: ['#cc4e4e', '#ffb6b6', '#ffffff']
+                    });
+                    confetti({
+                        particleCount: 5,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 },
+                        colors: ['#cc4e4e', '#ffb6b6', '#ffffff']
+                    });
+
+                    if (Date.now() < end) {
+                        requestAnimationFrame(frame);
+                    }
+                }());
+
+                // Show Content
+                setTimeout(() => {
+                    fullScreenView.classList.add('visible');
+                    document.body.classList.add('letter-open');
+
+                    // Start Typewriter Effect
+                    const paragraphs = document.querySelectorAll('.typewriter-text');
+                    paragraphs.forEach(p => {
+                        const text = p.innerText; // Get raw text
+                        p.innerHTML = ''; // Clear content
+                        p.classList.add('typewriter'); // Add styling class
+
+                        // Split into characters and wrap in spans
+                        text.split('').forEach((char, index) => {
+                            const span = document.createElement('span');
+                            span.textContent = char;
+                            p.appendChild(span);
+
+                            // Delay appearance
+                            setTimeout(() => {
+                                span.classList.add('visible');
+                            }, index * 15); // Speed of typing
+                        });
+                    });
+
+                }, 800);
+            };
+
+            const closeLetter = () => {
+                if (!isOpen) return;
+
+                // Mark as opened once
+                hasOpenedOnce = true;
+
+                // Close Content
+                fullScreenView.classList.remove('visible');
+                document.body.classList.remove('letter-open');
+
+                setTimeout(() => {
+                    envelope.classList.remove('is-open'); // Close envelope
+
+                    // Show UI
+                    setTimeout(() => {
+                        headerText.style.opacity = '1';
+                        footerText.style.opacity = '1';
+
+
+
+                        isOpen = false;
+                    }, 600);
+                }, 600);
+            };
+
+            openBtn.addEventListener('click', openLetter);
+            closeBtn.addEventListener('click', closeLetter);
+
+            // Close on background tap (optional, good for mobile)
+            fullScreenView.addEventListener('click', (e) => {
+                if (e.target === fullScreenView) closeLetter();
+            });
+
+            // Music Player Logic
+            const audio = document.getElementById('audio-player');
+            const musicBtn = document.getElementById('music-btn');
+            const playIcon = document.getElementById('play-icon');
+            const albumArt = document.getElementById('album-art');
+            const progressBar = document.getElementById('progress-bar');
+
+            // Set initial time to 0
+            audio.currentTime = 0;
+            audio.volume = 0.5; // 50% volume
+
+            musicBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent triggering letter open if mapped generally
+                if (audio.paused) {
+                    audio.play();
+                    playIcon.textContent = 'pause';
+                    // removed animation toggle
+                } else {
+                    audio.pause();
+                    playIcon.textContent = 'play_arrow';
+                    // removed animation toggle
+                }
+            });
+
+            audio.addEventListener('timeupdate', () => {
+                // Update progress bar
+                if (audio.duration) {
+                    const progress = (audio.currentTime / audio.duration) * 100;
+                    progressBar.style.width = `${Math.max(0, progress)}%`;
+                }
+            });
+
+            audio.addEventListener('ended', () => {
+                audio.currentTime = 0; // Loop back to start point
+                audio.play();
+            });
+        });
+    </script>
+</body>
+
+</html>
