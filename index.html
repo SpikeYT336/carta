@@ -8,9 +8,7 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&amp;family=Spline+Sans:wght@300;400;500;700&amp;family=Caveat:wght@400;700&amp;family=Alex+Brush&amp;display=swap"
         rel="stylesheet" />
@@ -295,24 +293,6 @@
             color: rgba(204, 78, 78, 0.15);
         }
 
-        .typewriter span {
-            opacity: 0;
-            transition: opacity 0.05s ease;
-        }
-        .typewriter span.visible {
-            opacity: 1;
-        }
-
-        .map-container {
-            position: relative;
-            width: 100%;
-            height: 150px;
-            margin: 2rem 0;
-            background-image: url("data:image/svg+xml,%3Csvg width='100%25' height='100%25' viewBox='0 0 800 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cstyle%3E.path%7Bfill:none;stroke:%23e2e8f0;stroke-width:2;stroke-dasharray:10,10;animation:dash 30s linear infinite%7D@keyframes dash%7Bto%7Bstroke-dashoffset:-1000%7D%7D%3C/style%3E%3Cpath class='path' d='M100,200 Q400,50 700,200' /%3E%3Ccircle cx='100' cy='200' r='8' fill='%23cc4e4e'/%3E%3Ccircle cx='700' cy='200' r='8' fill='%23cc4e4e'/%3E%3Ctext x='100' y='230' font-family='sans-serif' font-size='14' fill='%2364748b' text-anchor='middle'%3EAcá%3C/text%3E%3Ctext x='700' y='230' font-family='sans-serif' font-size='14' fill='%2364748b' text-anchor='middle'%3ECórdoba%3C/text%3E%3Cg%3E%3CanimateMotion dur='4s' repeatCount='indefinite' path='M100,200 Q400,50 700,200' /%3E%3Ctext font-size='24'%3E✈️%3C/text%3E%3C/g%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: contain;
-        }
     </style>
 </head>
 
@@ -369,7 +349,7 @@
                     <div class="envelope-flap rounded"></div>
 
                     <!-- Wax Seal Trigger -->
-                    <button class="wax-seal group animate-pulse" id="open-btn" aria-label="Abrir carta">
+                    <button class="wax-seal group" id="open-btn" aria-label="Abrir carta">
                         <span
                             class="material-symbols-outlined text-white/90 text-2xl group-hover:scale-110 transition-transform">favorite</span>
                     </button>
@@ -441,7 +421,7 @@
                 </div>
 
                 <!-- Intro Paragraphs -->
-                <p class="typewriter-text">
+                <p>
                     Te escribí esta cartita porque, aunque hace menos de un mes que nos conocemos, ya te agarre
                     muchisimo cariño
                     . Quería desearte un muy feliz 14 de febrero ❤️.<br>
@@ -453,7 +433,7 @@
 
 
 
-                <p class="mt-8 typewriter-text">
+                <p class="mt-8">
                     Ojalá este sea solo el primero de un montón de momentos lindos que nos toquen vivir aunque me mata
                     la
                     distancia y saber que estás lejos, pero te juro que las ganas de conocerte y de tenerte
@@ -461,15 +441,10 @@
                     hermosos💖.
                 </p>
 
-                <!-- Map Illustration -->
-                <div class="map-container" aria-label="Mapa conectando nosotros con Córdoba"></div>
-                <p class="text-center text-xs text-slate-400 -mt-6 mb-8 font-sans tracking-widest uppercase">Rompiendo
-                    la distancia</p>
-
                 <!-- Grid Gallery 1 -->
 
 
-                <p class="typewriter-text">
+                <p>
                     Yo sé que capaz es re pronto y que recién estamos arrancando, pero la verdad es que me
                     ilusiona una banda todo lo que se pueda dar entre nosotros. Me encanta tu forma de ser, tus
                     ojitos, y cómo, con un par de mensajes, lográs cambiarme el día y hacerme sentir re bien. Me
@@ -487,7 +462,7 @@
 
 
 
-                <p class="typewriter-text">
+                <p>
                     Quiero que sepas que de verdad valoro todo, cada risa que nos sacamos y cada segundito que
                     compartimos. Todo eso me hace muy feliz y me demuestra que,
                     te amo y si quiero algo lindo con vos, la distancia y la edad no importan tanto jskjsj.
@@ -561,56 +536,10 @@
                 // Open Envelope
                 envelope.classList.add('is-open');
 
-                // Confetti Explosion
-                const duration = 3000;
-                const end = Date.now() + duration;
-
-                (function frame() {
-                    confetti({
-                        particleCount: 5,
-                        angle: 60,
-                        spread: 55,
-                        origin: { x: 0 },
-                        colors: ['#cc4e4e', '#ffb6b6', '#ffffff']
-                    });
-                    confetti({
-                        particleCount: 5,
-                        angle: 120,
-                        spread: 55,
-                        origin: { x: 1 },
-                        colors: ['#cc4e4e', '#ffb6b6', '#ffffff']
-                    });
-
-                    if (Date.now() < end) {
-                        requestAnimationFrame(frame);
-                    }
-                }());
-
                 // Show Content
                 setTimeout(() => {
                     fullScreenView.classList.add('visible');
                     document.body.classList.add('letter-open');
-
-                    // Start Typewriter Effect
-                    const paragraphs = document.querySelectorAll('.typewriter-text');
-                    paragraphs.forEach(p => {
-                        const text = p.innerText; // Get raw text
-                        p.innerHTML = ''; // Clear content
-                        p.classList.add('typewriter'); // Add styling class
-
-                        // Split into characters and wrap in spans
-                        text.split('').forEach((char, index) => {
-                            const span = document.createElement('span');
-                            span.textContent = char;
-                            p.appendChild(span);
-
-                            // Delay appearance
-                            setTimeout(() => {
-                                span.classList.add('visible');
-                            }, index * 15); // Speed of typing
-                        });
-                    });
-
                 }, 800);
             };
 
